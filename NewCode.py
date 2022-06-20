@@ -4,12 +4,16 @@ import skimage.io as im
 import pathlib
 import os
 import cv2
+from typing import List, Tuplt, Dict, Any
 from statistics import mean
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 import csv
+import dask
 
 directories = ["/home/jovyan/data/img/codex_sample/src_data/Cyc1_reg1", "/home/jovyan/data/img/codex_sample/src_data/Cyc2_reg1"]
+
+Image = np.ndarray
 
 class sections:
     
@@ -28,7 +32,12 @@ class sections:
         self.value += 1
         return i, j
 
-def findImages(directories, lst):
+slice(0, 10, 1)
+slice(None)
+img[(slice(0, 10), slice(0, 10))]
+
+
+def findImages(directories, lst) -> List[Image]:
     global opath
     f = 0
     i = 0
@@ -36,8 +45,8 @@ def findImages(directories, lst):
         directory = directories[r]
         for path in pathlib.Path(directory).iterdir(): #Finding images in directory
             if path.is_file():
-                opath = open(path, 'r').name
-                if ".tif" in opath:
+                opath = path.name
+                if opath.suffix in (".tif", ".tiff"):
                     image = im.imread(opath, plugin="tifffile")
                     if sum(image[0])/len(image) > 1: #Mean of first line of photo, blank images are ignored
                         lst.append(image)
@@ -46,15 +55,33 @@ def findImages(directories, lst):
             f += 1
     return lst
 
-def signalNoise(img):
-    axis = 0
-    ddof = 0
-    Arr = np.asanyarray(img)
-    me = Arr.mean(axis)
-    sd = Arr.std(axis=axis, ddof=ddof)
-    SNR = np.where(sd == 0, 0, me/sd)
-    return SNR
+{"Cyc1_reg1": {"1_00001_Z001_CH1.tif": {"snr": 1.0, "bluriness": 1232312391}}}}
 
+
+def read_and_process_img(img_path: Path) -> Dict[str, Dict[str, float]:
+    image = im.imread(img_path, plugin="tifffile")
+    results = calc_metrics(image)
+    fin_res = {img_path.name: results}
+    return fin_res
+
+def read_and_process_imgs_parallelized(dataset_dir: Path) -> Dict[str, Dict[str, Dict[str, float]]:
+    fin_res = dict()
+    for img_dir in img_dirs:
+        tasks = []
+        for img_path in img_dirs[img_dir]:
+            task = dask.delayed(read_and_process_img)(img_path)
+            tasks.append(task)
+        this_dir_results = dask.compute(*tasks)
+        fin_res[img_dir] = this_dir_results
+    return fin_res
+     
+                                                                 
+def signalNoise(img: Image) -> float:
+    mean: np.ndarray = np.mean(img)
+    std = np.std(img)
+    snr = (mean**2 / std**2 )
+    return snr
+    
 def imageBlur(img):
     learning_data = pd.read_csv("TrainingSet.csv")
     X = learning_data.drop(columns="BLUR") #Input data set
@@ -97,3 +124,45 @@ for i in range(len(loi)): #Main loop len(loi)
     print()
 print("\nDONE")
 f.close()
+
+  
+                                                                  
+Cyc1_reg1
+----Channels 1-4
+    ------- Z-planes 1-4
+     ------------- Tiles 4
+Cyc2_reg1
+                                                                  
+                                                                  
+import json
+
+with open("out_file.json", "w") as f:
+    json.dump(dictionary, f)
+
+                                                                  
+                                                                  
+
+                                                                  
+def main(input_path: Path):
+    do_proc(input_path)
+
+                                                                  
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", type=Path, help="path to the input directorye with images")
+    
+    args = parser.parse_args()
+    main(args.i)                                                              
+                                                                  
+
+                                                                  
+                                                                  
+                                                                  
+#import NewCode
+#NewCode.main(path)
+                                                                  
+                                                                  
+                                                                  
+                                                                                                                 
+                                                                  
+                                                                  
