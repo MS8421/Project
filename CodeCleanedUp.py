@@ -6,12 +6,53 @@ import skimage.measure
 import pathlib
 import os
 
-def findImagesFromDirectories(directories, listOfImages):
+
+1)build a represeantation of dataset
+  - find directories
+     - go through the files and find images
+
+2) read images
+3) calculate metrics
+4) write results to the disk
+        
+def main():
+    listing = get_dir_structure(dataset_path)
+    #read_images_from_listing(listing)
+    #process_images(listing)
+    for directory in directories:
+        for image_path in directories[directory]:
+            img = read_img(image_path)   
+            metric_resutls = calc_metrics(img)
+
+
+    
+    
+  
+
+for directory in directories:
+    for image_path in directories[directory]:
+        read(image_path)
+
+      
+  
+
+def findImagesFromDirectories(directories: List[Path]) -> List[Path]:
+    img_path_list = []
     for i in range(len(directories)):
         currentDirectory = directories[i]
         for path in pathlib.Path(currentDirectory).iterdir(): #Finding images in current directory
-            filterFiles(path, listOfImages)
-    return listOfImages
+            is_image = check_if_img_file(path)
+            if is_image:
+                img_path_list.append(path)
+    return img_path_list
+
+def load_imgs(img_path_list: List[Path]) -> List[np.ndarray]:
+    img_list = []
+    for img_path in img_path_list:
+        img = skimage.io.imread(img_path, plugin="tifffile")
+        img_list.append(img)
+    return img_list
+
 
 def filterFiles(path, listOfImages):
     if path.is_file():
